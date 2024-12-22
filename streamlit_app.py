@@ -61,7 +61,7 @@ uploaded_file = st.file_uploader("Upload a resume (PDF)", type=["pdf"])
 
 skill_set1=["python", "Data Analysis", "Machine Learning", "Communication", "Project Management", "Deep Learning", "SQL", "Tableau",
     "Java", "C++", "JavaScript", "HTML", "CSS", "React", "Angular", "Node.js", "MongoDB", "Express.js", "Git",
-    "Research", "Statistics", "Quantitative Analysis", "Qualitative Analysis", "SPSS", "R", "Data Visualization", "Matplotlib",
+    "Research", "Statistics", "Quantitative Analysis", "Qualitative Analysis", "SPSS", "Data Visualization", "Matplotlib",
     "Seaborn", "Plotly", "Pandas", "Numpy", "Scikit-learn", "TensorFlow", "Keras", "PyTorch", "NLTK", "Text Mining",
     "Natural Language Processing", "Computer Vision", "Image Processing", "OCR", "Speech Recognition", "Recommendation Systems",
     "Collaborative Filtering", "Content-Based Filtering", "Reinforcement Learning", "Neural Networks", "Convolutional Neural Networks",
@@ -142,9 +142,15 @@ if uploaded_file:
                     name=name, skills=",".join(skills), experience=experience
                 )
             )
-            st.success("Resume parsed and added to the database!")
     except Exception as e:
         st.error(f"Error inserting data into the database: {e}")
+
+    input_jd = st.text_area("Enter the job description")
+
+    req_skill=extract_skills(input_jd, skill_set)
+    st.write("**Req Skills:**", ", ".join(req_skill))
+
+    st.subheader("Resume Score")
     # Display database records
     st.subheader("All Parsed Resumes")
     df = pd.read_sql_table("candidates", engine)
