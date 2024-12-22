@@ -1,6 +1,7 @@
 import re
 import fitz
 import nltk
+nltk.download('punkt_tab')
 from sqlalchemy import create_engine, Column, String, Integer, MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
 import streamlit as st
