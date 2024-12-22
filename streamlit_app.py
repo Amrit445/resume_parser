@@ -58,13 +58,8 @@ def extract_candidate_name(text):
 st.title("Resume Parser")
 
 uploaded_file = st.file_uploader("Upload a resume (PDF)", type=["pdf"])
-if uploaded_file:
-    with open("temp_resume.pdf", "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    
-    # Extract and process resume
-    text = extract_text_from_pdf("temp_resume.pdf")
-    skill_set1=["python", "Data Analysis", "Machine Learning", "Communication", "Project Management", "Deep Learning", "SQL", "Tableau",
+
+skill_set1=["python", "Data Analysis", "Machine Learning", "Communication", "Project Management", "Deep Learning", "SQL", "Tableau",
     "Java", "C++", "JavaScript", "HTML", "CSS", "React", "Angular", "Node.js", "MongoDB", "Express.js", "Git",
     "Research", "Statistics", "Quantitative Analysis", "Qualitative Analysis", "SPSS", "R", "Data Visualization", "Matplotlib",
     "Seaborn", "Plotly", "Pandas", "Numpy", "Scikit-learn", "TensorFlow", "Keras", "PyTorch", "NLTK", "Text Mining",
@@ -123,13 +118,19 @@ if uploaded_file:
     "Airtable", "Monday.com", "Basecamp", "Notion", "Miro", "Quantum Computing", "Tensor Networks", "Neuromorphic Computing", 
     "Edge Computing", "5G Networking", "Remote Desktop Tools (TeamViewer, AnyDesk)", "API Management (Postman, Swagger)", 
     "IT Asset Management", "ChatGPT Plugins Development", "SaaS Product Development", "Generative AI", "BeautifulSoup"]
-    skill_set=[element.lower() for element in skill_set1]
+skill_set=[element.lower() for element in skill_set1]
+if uploaded_file:
+    with open("temp_resume.pdf", "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    
+    # Extract and process resume
+    text = extract_text_from_pdf("temp_resume.pdf")
     skills = extract_skills(text, skill_set)
     experience = extract_experience(text)
     name = extract_candidate_name(text)
     
     
-    st.success(f"Parsed resume for {name}")
+    st.write("**Name:**", name)
     st.write("**Skills:**", ", ".join(skills))
     st.write("**Experience:**", experience or "None")
     
