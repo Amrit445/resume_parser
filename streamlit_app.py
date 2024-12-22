@@ -3,24 +3,30 @@ import fitz
 import nltk
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
-from sqlalchemy import create_engine, Column, String, Integer, MetaData, Table
+from sqlalchemy import create_engine, Column, String, Integer, MetaData, Table, inspect
 from sqlalchemy.ext.declarative import declarative_base
 import streamlit as st
 import pandas as pd
 
-Base = declarative_base()
-
-class Candidate(Base):
-    __tablename__ = 'candidates'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
-    skills = Column(String)
-    experience = Column(String)
 
 def setup_database():
     engine = create_engine("sqlite:///candidates.db")
-    Base.metadata.create_all(engine)
-    return engine
+    metadata = MetaData()
+
+    # Define the table schema
+    Candidate = Table(
+        "candidates",
+        metadata,
+        Column("id", Integer, primary_key=True, autoincrement=True),
+        Column("name", String),
+        Column("skills", String),
+        Column("experience", String),
+    )
+    # Create the table if it doesn't exist
+    metadata.create_all(engine)
+    return engine, Candidate
+
+engine, Candidate = setup_database()
 
 def extract_text_from_pdf(file_path):
     with fitz.open(file_path) as pdf:
@@ -48,7 +54,6 @@ def extract_candidate_name(text):
     proper_nouns = [word for word, tag in pos_tags if tag == 'NNP']
     return proper_nouns[0] if proper_nouns else "Not Found"
 
-engine = setup_database()
 
 st.title("Resume Parser")
 
@@ -127,18 +132,18 @@ if uploaded_file:
     st.success(f"Parsed resume for {name}")
     st.write("**Skills:**", ", ".join(skills))
     st.write("**Experience:**", experience or "None")
-
     
-    # Save to database
-    with engine.connect() as conn:
-        conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
+
     try:
         with engine.connect() as conn:
-            st.success("Database connection successful!")
+            conn.execute(
+                Candidate.insert().values(
+                    name=name, skills=",".join(skills), experience=experience
+                )
+            )
+            st.success("Resume parsed and added to the database!")
     except Exception as e:
-        st.error(f"Database connection failed: {e}")
-
-
+        st.error(f"Error inserting data into the database: {e}")
     # Display database records
     st.subheader("All Parsed Resumes")
     df = pd.read_sql_table('candidates', engine)
