@@ -132,13 +132,11 @@ if uploaded_file:
     # Save to database
     with engine.connect() as conn:
         conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
-
-    
-    with engine.connect() as conn:
-        conn.execute(Candidate.__table__.insert().values(name="John Doe", skills="python,sql", experience="5"))
-    df = pd.read_sql_table('candidates', engine)
-    st.dataframe(df)
-
+    try:
+        with engine.connect() as conn:
+            st.success("Database connection successful!")
+    except Exception as e:
+        st.error(f"Database connection failed: {e}")
 
 
     # Display database records
