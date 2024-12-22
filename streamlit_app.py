@@ -128,14 +128,14 @@ if uploaded_file:
     st.write("**Skills:**", ", ".join(skills))
     st.write("**Experience:**", experience or "None")
 
-    from sqlalchemy import inspect
-
-    inspector = inspect(engine)
-    st.write("Tables in database:", inspector.get_table_names())
-
+    
     # Save to database
     with engine.connect() as conn:
-        conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
+        try:
+            conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
+            st.success("Data inserted successfully!")
+        except Exception as e:
+            st.error(f"Error inserting data: {e}")
 
     # Display database records
     st.subheader("All Parsed Resumes")
