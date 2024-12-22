@@ -5,6 +5,7 @@ nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
 import streamlit as st
 import pandas as pd
+import sqlite3
 
 def connect_db():
     conn = sqlite3.connect("skills.db")
