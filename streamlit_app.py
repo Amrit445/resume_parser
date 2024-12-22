@@ -129,7 +129,7 @@ if uploaded_file:
     
     st.success(f"Parsed resume for {name}")
     st.write("**Skills:**", ", ".join(skills))
-    st.write("**Experience:**", experience or "Not Found")
+    st.write("**Experience:**", experience or "None")
 
     # Display database records
     st.subheader("All Parsed Resumes")
