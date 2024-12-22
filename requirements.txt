@@ -4,4 +4,3 @@ pymupdf
 sqlalchemy
 pandas
 scikit-learn
-sqlite3
