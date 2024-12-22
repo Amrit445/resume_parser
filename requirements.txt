@@ -1,6 +1,6 @@
-streamlit
-nltk
-pymupdf
-sqlalchemy
-pandas
-scikit-learn
+streamlit == 1.40.0
+pymupdf == 1.24.14
+scikit-learn == 1.5.2
+numpy == 1.26.4
+pandas == 2.2.3
+nltk == 3.9.1
