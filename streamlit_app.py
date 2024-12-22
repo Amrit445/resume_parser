@@ -169,7 +169,7 @@ if uploaded_file:
     similarity_matrix = cosine_similarity(vectors[0], vectors[1])
     
     # Output the cosine similarity using Streamlit
-    st.write(f"Cosine Similarity: {similarity_matrix[0][0]}")
+    st.write(f"Resume Score: {similarity_matrix[0][0]}")
     
 
     
