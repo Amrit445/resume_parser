@@ -6,9 +6,6 @@ from sqlalchemy.ext.declarative import declarative_base
 import streamlit as st
 import pandas as pd
 
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-
 Base = declarative_base()
 
 class Candidate(Base):
