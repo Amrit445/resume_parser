@@ -3,30 +3,32 @@ import fitz
 import nltk
 nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng')
-from sqlalchemy import create_engine, Column, String, Integer, MetaData, Table, inspect
-from sqlalchemy.ext.declarative import declarative_base
 import streamlit as st
 import pandas as pd
 
+def connect_db():
+    conn = sqlite3.connect("skills.db")
+    return conn
 
-def setup_database():
-    engine = create_engine("sqlite:///candidates.db")
-    metadata = MetaData()
+def create_tables():
+    conn = connect_db()
+    c = conn.cursor()
 
-    # Define the table schema
-    Candidate = Table(
-        "candidates",
-        metadata,
-        Column("id", Integer, primary_key=True, autoincrement=True),
-        Column("name", String),
-        Column("skills", String),
-        Column("experience", String),
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS candiates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT ,
+            name TEXT UNIQUE,
+            skills TEXT,
+            experience TEXT
+        )
+        """
     )
-    # Create the table if it doesn't exist
-    metadata.create_all(engine)
-    return engine, Candidate
+    conn.commit()
+    conn.close()
+create_tables()
 
-engine, Candidate = setup_database()
+
 
 def extract_text_from_pdf(file_path):
     with fitz.open(file_path) as pdf:
@@ -134,14 +136,13 @@ if uploaded_file:
     st.write("**Skills:**", ", ".join(skills))
     st.write("**Experience:**", experience or "None")
     
+    conn = connect_db()
+    c = conn.cursor()
 
     try:
-        with engine.connect() as conn:
-            conn.execute(
-                Candidate.insert().values(
-                    name=name, skills=",".join(skills), experience=experience
-                )
-            )
+        c.execute("INSERT INTO recruiters (name, skills, experience) VALUES (?, ?, ?)", (name, skills, experience))
+        conn.commit()
+        st.success("Candidate added successfully!")
     except Exception as e:
         st.error(f"Error inserting data into the database: {e}")
 
@@ -175,5 +176,5 @@ if uploaded_file:
     
     # Display database records
     st.subheader("All Parsed Resumes")
-    df = pd.read_sql_table("candidates", engine)
+    df = pd.read_sql_query("SELECT * FROM candidates", conn)
     st.dataframe(df)
