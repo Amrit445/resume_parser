@@ -131,11 +131,15 @@ if uploaded_file:
     
     # Save to database
     with engine.connect() as conn:
-        try:
-            conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
-            st.success("Data inserted successfully!")
-        except Exception as e:
-            st.error(f"Error inserting data: {e}")
+        conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
+
+    
+    with engine.connect() as conn:
+    conn.execute(Candidate.__table__.insert().values(name="John Doe", skills="python,sql", experience="5"))
+    df = pd.read_sql_table('candidates', engine)
+    st.dataframe(df)
+
+
 
     # Display database records
     st.subheader("All Parsed Resumes")
