@@ -123,13 +123,19 @@ if uploaded_file:
     experience = extract_experience(text)
     name = extract_candidate_name(text)
     
-    # Save to database
-    with engine.connect() as conn:
-        conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
     
     st.success(f"Parsed resume for {name}")
     st.write("**Skills:**", ", ".join(skills))
     st.write("**Experience:**", experience or "None")
+
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    st.write("Tables in database:", inspector.get_table_names())
+
+    # Save to database
+    with engine.connect() as conn:
+        conn.execute(Candidate.__table__.insert().values(name=name, skills=",".join(skills), experience=experience))
 
     # Display database records
     st.subheader("All Parsed Resumes")
