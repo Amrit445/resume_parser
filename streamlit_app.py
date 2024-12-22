@@ -60,7 +60,7 @@ st.title("Resume Parser")
 uploaded_file = st.file_uploader("Upload a resume (PDF)", type=["pdf"])
 
 skill_set1=["python", "Data Analysis", "Machine Learning", "Communication", "Project Management", "Deep Learning", "SQL", "Tableau",
-    "Java", "C++", "JavaScript", "HTML", "CSS", "React", "Angular", "Node.js", "MongoDB", "Express.js", "Git",
+    "Java", "C++", "JavaScript", "HTML", "CSS", "React", "Angular", "Node.js", "MongoDB", "R","Express.js", "Git",
     "Research", "Statistics", "Quantitative Analysis", "Qualitative Analysis", "SPSS", "Data Visualization", "Matplotlib",
     "Seaborn", "Plotly", "Pandas", "Numpy", "Scikit-learn", "TensorFlow", "Keras", "PyTorch", "NLTK", "Text Mining",
     "Natural Language Processing", "Computer Vision", "Image Processing", "OCR", "Speech Recognition", "Recommendation Systems",
@@ -147,10 +147,32 @@ if uploaded_file:
 
     input_jd = st.text_area("Enter the job description")
 
-    req_skill=extract_skills(input_jd, skill_set)
-    st.write("**Req Skills:**", ", ".join(req_skill))
+    req_skills=extract_skills(input_jd, skill_set)
+    st.write("**Req Skills:**", ", ".join(req_skills))
 
-    st.subheader("Resume Score")
+    
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    
+    
+    # Convert lists of strings to a single string per list
+    text_A = " ".join([item.strip() for item in skills])
+    text_B = " ".join([item.strip() for item in req_skills])
+    
+    # Initialize the TfidfVectorizer
+    vectorizer = TfidfVectorizer()
+    
+    # Fit and transform the lists into vectors
+    vectors = vectorizer.fit_transform([text_A, text_B])
+    
+    # Calculate cosine similarity
+    similarity_matrix = cosine_similarity(vectors[0], vectors[1])
+    
+    # Output the cosine similarity using Streamlit
+    st.write(f"Cosine Similarity: {similarity_matrix[0][0]}")
+    
+
+    
     # Display database records
     st.subheader("All Parsed Resumes")
     df = pd.read_sql_table("candidates", engine)
