@@ -146,5 +146,5 @@ if uploaded_file:
         st.error(f"Error inserting data into the database: {e}")
     # Display database records
     st.subheader("All Parsed Resumes")
-    df = pd.read_sql_table('candidates', engine)
+    df = pd.read_sql_table("candidates", engine)
     st.dataframe(df)
