@@ -135,7 +135,7 @@ if uploaded_file:
 
     
     with engine.connect() as conn:
-    conn.execute(Candidate.__table__.insert().values(name="John Doe", skills="python,sql", experience="5"))
+        conn.execute(Candidate.__table__.insert().values(name="John Doe", skills="python,sql", experience="5"))
     df = pd.read_sql_table('candidates', engine)
     st.dataframe(df)
 
