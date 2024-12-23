@@ -6,6 +6,8 @@ nltk.download('averaged_perceptron_tagger_eng')
 import streamlit as st
 import pandas as pd
 import sqlite3
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 def connect_db():
     conn = sqlite3.connect("skills.db")
@@ -17,11 +19,11 @@ def create_tables():
 
     c.execute(
         """
-        CREATE TABLE IF NOT EXISTS candiates (
+        CREATE TABLE IF NOT EXISTS candidates (
             id INTEGER PRIMARY KEY AUTOINCREMENT ,
-            name TEXT UNIQUE,
+            name TEXT NOT NULL,
             skills TEXT,
-            experience TEXT
+            experience TEXT DEFAULT NULL
         )
         """
     )
@@ -29,19 +31,24 @@ def create_tables():
     conn.close()
 create_tables()
 
-
-
-def extract_text_from_pdf(file_path):
-    with fitz.open(file_path) as pdf:
-        text = ""
-        for page in pdf:
-            text += page.get_text()
-    return text
+#----------------------------------------------------------------------#
+def extract_text_from_pdf(uploaded_file):
+    try:
+        pdf_text = ""
+        with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+            for page in doc:
+                pdf_text += page.get_text()
+        return pdf_text
+    except Exception as e:    
+        st.error("Error reading PDF file.")
+        return None
 
 def extract_skills(text, skill_set):
     text = text.lower()
     found_skills = [skill for skill in skill_set if skill in text]
     return found_skills
+def make_skill_string(found_skills): 
+    return " ".join(found_skills)
 
 def extract_experience(text):
     experience_pattern = re.compile(r"(\d+)\s+years? of experience")
@@ -56,7 +63,7 @@ def extract_candidate_name(text):
     pos_tags = pos_tag(tokens)
     proper_nouns = [word for word, tag in pos_tags if tag == 'NNP']
     return proper_nouns[0] if proper_nouns else "Not Found"
-
+#----------------------------------------------------------------------#
 
 st.title("Resume Parser")
 
@@ -121,61 +128,70 @@ skill_set1=["python", "Data Analysis", "Machine Learning", "Communication", "Pro
     "Airtable", "Monday.com", "Basecamp", "Notion", "Miro", "Quantum Computing", "Tensor Networks", "Neuromorphic Computing", 
     "Edge Computing", "5G Networking", "Remote Desktop Tools (TeamViewer, AnyDesk)", "API Management (Postman, Swagger)", 
     "IT Asset Management", "ChatGPT Plugins Development", "SaaS Product Development", "Generative AI", "BeautifulSoup"]
+
+
 skill_set=[element.lower() for element in skill_set1]
+
 if uploaded_file:
-    with open("temp_resume.pdf", "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    
-    # Extract and process resume
-    text = extract_text_from_pdf("temp_resume.pdf")
-    skills = extract_skills(text, skill_set)
+
+    text = extract_text_from_pdf(uploaded_file)
+    ext_skills = extract_skills(text, skill_set) #extracted skills, as a list
+    skills = make_skill_string(ext_skills) #db takes string
     experience = extract_experience(text)
     name = extract_candidate_name(text)
     
     
-    st.write("**Name:**", name)
-    st.write("**Skills:**", ", ".join(skills))
-    st.write("**Experience:**", experience or "None")
+    st.write("Name:", name)
+    st.write("Skills:", ", ".join(ext_skills))
+    st.write("Experience:", experience or "None")
     
     conn = connect_db()
     c = conn.cursor()
 
     try:
-        c.execute("INSERT INTO recruiters (name, skills, experience) VALUES (?, ?, ?)", (name, skills, experience))
+        c.execute("INSERT INTO candidates (name, skills, experience) VALUES (?, ?, ?)", (name, ", ".join(ext_skills), experience))
         conn.commit()
         st.success("Candidate added successfully!")
+
+
     except Exception as e:
         st.error(f"Error inserting data into the database: {e}")
 
-    input_jd = st.text_area("Enter the job description")
+input_jd = st.text_area("Enter the job description")
 
+if input_jd:
     req_skills=extract_skills(input_jd, skill_set)
-    st.write("**Req Skills:**", ", ".join(req_skills))
+    st.write("Req Skills:", ", ".join(req_skills))
 
     
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
-    
-    
-    # Convert lists of strings to a single string per list
-    text_A = " ".join([item.strip() for item in skills])
-    text_B = " ".join([item.strip() for item in req_skills])
-    
-    # Initialize the TfidfVectorizer
-    vectorizer = TfidfVectorizer()
-    
-    # Fit and transform the lists into vectors
-    vectors = vectorizer.fit_transform([text_A, text_B])
-    
-    # Calculate cosine similarity
-    similarity_matrix = cosine_similarity(vectors[0], vectors[1])
-    
-    # Output the cosine similarity using Streamlit
-    st.write(f"Resume Score: {similarity_matrix[0][0]}")
-    
+    combined_skills = list(set(ext_skills + req_skills)) 
+    # st.write(combined_skills)
+    vectoriser = TfidfVectorizer(vocabulary=combined_skills)
+    vectoriser = TfidfVectorizer()
 
+
+    req_skills_string = make_skill_string(req_skills)
+    ext_skills_string = make_skill_string(ext_skills)
+
+    documents = [req_skills_string, ext_skills_string]
+    vectors = vectoriser.fit_transform(documents)
+
+
+    #cosine_sim
+    similarity = cosine_similarity(vectors[0], vectors[1])
+    st.write(f"Cosine Similarity: {similarity[0][0] * 100:.2f}%")
+
+    #relevancy, ye wala use krna
+    req_skills_set = set(req_skills)
+    ext_skills_set = set(ext_skills)
+    matching_skills = req_skills_set.intersection(ext_skills_set)
+    relevancy_percentage = (len(matching_skills) / len(req_skills_set)) * 100
+
+    st.write(f"Relevancy Percentage: {relevancy_percentage:.2f}%")
     
     # Display database records
     st.subheader("All Parsed Resumes")
     df = pd.read_sql_query("SELECT * FROM candidates", conn)
     st.dataframe(df)
+
+    conn.close()
